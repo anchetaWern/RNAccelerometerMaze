@@ -31,55 +31,55 @@ const op = {
   'L': RIGHT
 };
 
-const CreateMaze = (gridX, gridY) => {
+function CreateMaze(gridX, gridY){
 
-  this.width = gridX; 
-  this.height = gridY; 
+  const mapWidth = gridX; 
+  const mapHeight = gridY; 
 
-  this.blockWidth = Math.floor(width / this.width);
-  this.blockHeight = Math.floor(height / this.height);
+  const blockWidth = Math.floor(width / mapWidth);
+  const blockHeight = Math.floor(height / mapHeight);
 
-  this.grid = new Array(this.height)
-  for (var i = 0; i < this.grid.length; i++) {
-    this.grid[i] = new Array(this.width);
+  let grid = new Array(mapHeight)
+  for (var i = 0; i < grid.length; i++) {
+    grid[i] = new Array(mapWidth);
   }
 
   const wallOpts = {
     isStatic: true,
   };
 
-  this.matter = Matter.Composite.create(wallOpts);
+  const matter = Matter.Composite.create(wallOpts);
 
-  getDirectionX = (dir) => {
+  const getDirectionX = (dir) => {
     return directionX[dir];
   }
 
-  getDirectionY = (dir) => {
+  const getDirectionY = (dir) => {
     return directionY[dir];
   }
 
-  getOpposite = (dir) => {
+  const getOpposite = (dir) => {
     return op[dir];
   }
 
-  getPointInDirection = (x, y, dir) => {
-    const newXPoint = x + this.getDirectionX(dir);
-    const newYPoint = y + this.getDirectionY(dir);
+  const getPointInDirection = (x, y, dir) => {
+    const newXPoint = x + getDirectionX(dir);
+    const newYPoint = y + getDirectionY(dir);
 
-    if (newXPoint < 0 || newXPoint >= this.width) {
+    if (newXPoint < 0 || newXPoint >= mapWidth) {
       return;
     }
     
-    if (newYPoint < 0 || newYPoint >= this.height) {
+    if (newYPoint < 0 || newYPoint >= mapHeight) {
       return;
     }
 
-    return this.grid[newYPoint][newXPoint];
+    return grid[newYPoint][newXPoint];
   }
 
-  generateWall = (x, y) => {
+  const generateWall = (x, y) => {
     const walls = Matter.Composite.create({ isStatic: true });
-    const gridPoint = this.grid[y][x];
+    const gridPoint = grid[y][x];
     const opts = { 
       isStatic: true,
       label: 'wall'
@@ -87,61 +87,60 @@ const CreateMaze = (gridX, gridY) => {
 
     const wallThickness = 5;
 
-    const topPoint = this.getPointInDirection(x, y, TOP);
-    if (gridPoint !== TOP && topPoint !== this.getOpposite(TOP)) {
-      Matter.Composite.add(walls, Matter.Bodies.rectangle(this.blockWidth / 2, 0, this.blockWidth, wallThickness, opts));
+    const topPoint = getPointInDirection(x, y, TOP);
+    if (gridPoint !== TOP && topPoint !== getOpposite(TOP)) {
+      Matter.Composite.add(walls, Matter.Bodies.rectangle(blockWidth / 2, 0, blockWidth, wallThickness, opts));
     }
-    const bottomPoint = this.getPointInDirection(x, y, BOTTOM);
-    if (gridPoint !== BOTTOM && bottomPoint !== this.getOpposite(BOTTOM)) {
-      Matter.Composite.add(walls, Matter.Bodies.rectangle(this.blockWidth / 2, this.blockHeight, this.blockWidth, wallThickness, opts));
+    const bottomPoint = getPointInDirection(x, y, BOTTOM);
+    if (gridPoint !== BOTTOM && bottomPoint !== getOpposite(BOTTOM)) {
+      Matter.Composite.add(walls, Matter.Bodies.rectangle(blockWidth / 2, blockHeight, blockWidth, wallThickness, opts));
     }
-    const leftPoint = this.getPointInDirection(x, y, LEFT);
-    if (gridPoint !== LEFT && leftPoint !== this.getOpposite(LEFT)) {
-      Matter.Composite.add(walls, Matter.Bodies.rectangle(0, this.blockHeight / 2, wallThickness, this.blockHeight + wallThickness, opts));
+    const leftPoint = getPointInDirection(x, y, LEFT);
+    if (gridPoint !== LEFT && leftPoint !== getOpposite(LEFT)) {
+      Matter.Composite.add(walls, Matter.Bodies.rectangle(0, blockHeight / 2, wallThickness, blockHeight + wallThickness, opts));
     }
-    const rightPoint = this.getPointInDirection(x, y, RIGHT);
-    if (gridPoint !== RIGHT && rightPoint !== this.getOpposite(RIGHT)) {
-      Matter.Composite.add(walls, Matter.Bodies.rectangle(this.blockWidth, this.blockHeight / 2, wallThickness, this.blockHeight + wallThickness, opts));
+    const rightPoint = getPointInDirection(x, y, RIGHT);
+    if (gridPoint !== RIGHT && rightPoint !== getOpposite(RIGHT)) {
+      Matter.Composite.add(walls, Matter.Bodies.rectangle(blockWidth, blockHeight / 2, wallThickness, blockHeight + wallThickness, opts));
     }
     
-    const translate = Matter.Vector.create(x * this.blockWidth, y * this.blockHeight);
+    const translate = Matter.Vector.create(x * blockWidth, y * blockHeight);
     Matter.Composite.translate(walls, translate);
-    
     return walls;
   }
 
 
-  carvePathFrom = (x, y, grid) => {
+  const carvePathFrom = (x, y, grid) => {
    
     const directions = [TOP, BOTTOM, RIGHT, LEFT]
       .sort(f => 0.5 - GetRandomNumber()); 
 
     directions.forEach(dir => {
-      const nX = x + this.getDirectionX(dir);
-      const nY = y + this.getDirectionY(dir);
-      const xNeighborOK = nX >= 0 && nX < this.width;
-      const yNeighborOK = nY >= 0 && nY < this.height;
+      const nX = x + getDirectionX(dir);
+      const nY = y + getDirectionY(dir);
+      const xNeighborOK = nX >= 0 && nX < mapWidth;
+      const yNeighborOK = nY >= 0 && nY < mapHeight;
       
 
       if (xNeighborOK && yNeighborOK && grid[nY][nX] == undefined) {
         grid[y][x] = grid[y][x] || dir;
-        grid[nY][nX] = grid[nY][nX] || this.getOpposite(dir);
-        this.carvePathFrom(nX, nY, grid);
+        grid[nY][nX] = grid[nY][nX] || getOpposite(dir);
+        carvePathFrom(nX, nY, grid);
       }
     }); 
   }
 
   
-  this.carvePathFrom(0, 0, this.grid);
+  carvePathFrom(0, 0, grid);
 
-  for (var i = 0; i < this.grid.length; i++) {
-    for (var j = 0; j < this.grid[i].length; j++) {
-      Matter.Composite.add(this.matter, this.generateWall(j, i));
+  for (var i = 0; i < grid.length; i++) {
+    for (var j = 0; j < grid[i].length; j++) {
+      Matter.Composite.add(matter, generateWall(j, i));
     }
   }
 
 
-  return this.matter;
+  return matter;
  
   
 }
